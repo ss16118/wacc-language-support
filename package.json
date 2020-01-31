@@ -3,7 +3,7 @@
     "displayName": "Wacc Language Support",
     "description": "VSCode language support for WACC",
     "icon": "images/wacc-icon.png",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "engines": {
         "vscode": ">=0.9.0-pre.1"
     },
