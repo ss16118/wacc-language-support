@@ -1,0 +1,26 @@
+{
+    "name": "wacc-language-support",
+    "displayName": "Wacc Language Support",
+    "description": "VSCode language support for WACC",
+    "version": "1.0.0",
+    "engines": {
+        "vscode": ">=0.9.0-pre.1"
+    },
+    "publisher": "YiningShen",
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "wacc",
+            "aliases": ["WACC", "wacc"],
+            "extensions": [".wacc"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "wacc",
+            "scopeName": "source.wacc",
+            "path": "./syntaxes/wacc.tmLanguage.json"
+        }]
+    }
+}
