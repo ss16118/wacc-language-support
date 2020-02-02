@@ -17,4 +17,5 @@ provides simple syntax highlighting for the WACC language.
 
 ### 1.1.0: 2020/2/1
 Added language server and provided code diagnostics and error highlight for identifiers.
-Issue: code diagnostics does not recognize scopes.
+The language server is based on the example from this [repo]("https://github.com/Microsoft/vscode-extension-samples").
+Issue: code diagnostics does not recognize scopes. Auto-complete and 
