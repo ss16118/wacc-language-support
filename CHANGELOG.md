@@ -13,3 +13,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### [1.0.1] - 2020.1.31
 ### Added
 - Self-designed icon for WACC
+
+### [1.1.0] - 2020.1.31
+### Added
+- Language server
+- Simple code diagnostics for identifiers
+- New icon for WACC
+### Changed
+- Identifiers that are all capitalized are highlighted using a more noticeable color
