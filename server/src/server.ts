@@ -195,6 +195,7 @@ function validateUnusedAndInvalidVariables(textDocument: TextDocument,
 	variables.forEach((attrs: IdentAttributes, ident: string) => {
 		db.setIdent(ident);
 		db.setIsFunc(false);
+		if (!ident) { return; }
 		if (attrs.occurrences > 1) {
 			// Same variable defined multiple times
 			for (var i = 0; i < attrs.occurrences; i++) {
@@ -215,7 +216,7 @@ function validateUnusedAndInvalidVariables(textDocument: TextDocument,
 			diagnostics.push(diagnostic);
 		}
 
-		if ((text.match(new RegExp("\\b" + ident + "\\b", "g")) || []).length == 1) {
+		if ((text.match(new RegExp("\\b" + ident + "\\b\\s*[^\\(]", "g")) || []).length == 1) {
 			// Unused identifier
 			let startIndex = attrs.indices[0];
 			db.setStartIndex(startIndex);
@@ -257,6 +258,7 @@ function validatedUnusedAndInvalidMethods(textDocument: TextDocument,
 	methods.forEach((signature: MethodSignature, ident: string) => {
 		db.setIdent(ident);
 		db.setIsFunc(true);
+		if (!ident) { return; }
 		if (signature.occurrences > 1) {
 			// Same variable defined multiple times
 			for (var i = 0; i < signature.occurrences; i++) {
@@ -319,9 +321,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	let problems = 0;
 	let diagnostics: Diagnostic[] = [];
-
 	let text = getTextToDiagnose(textDocument);
-	getDefinedIdents(text);
+  getDefinedIdents(text);
 	diagnostics = diagnostics.concat(validateIdentifiers(textDocument, text));
 	// diagnostics = diagnostics.concat(validateUndefinedVariables(textDocument));
 	

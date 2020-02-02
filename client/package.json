@@ -2,7 +2,7 @@
 	"name": "wacc-language-client",
 	"description": "Language client for WACC",
 	"author": "Yining Shen",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"publisher": "YiningShen",
 	"repository": {
 		"type": "git",
