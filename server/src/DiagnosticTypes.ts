@@ -16,12 +16,15 @@ export enum DiagnosticType {
 	MULTIPLE_DEFINITION,
 	INVALID_IDENTIFIER,
 	UNUSED_IDENTIFIER,
-	UNDEFINED_IDENTIFIER
+	UNDEFINED_IDENTIFIER,
+	KEYWORD_CLASH,
+	UNMATCHED_BLOCK
 };
 
 export class DiagnosticBuilder {
 
 	private ident: string = "";
+	private additionalInfo: string = "";
 	private startIndex: number = 0;
 	private textDocument: TextDocument;
 	private isFunc: boolean = false;
@@ -39,20 +42,29 @@ export class DiagnosticBuilder {
 		this.hasDiagnosticRelatedInformationCapability = hasDiagnosticRelatedInformationCapability;
 	}
 
-	public setIdent(ident: string) {
+	public setIdent(ident: string): DiagnosticBuilder {
 		this.ident = ident;
+		return this;
 	}
 
-	public setStartIndex(startIndex: number) {
+	public setStartIndex(startIndex: number): DiagnosticBuilder {
 		this.startIndex = startIndex;
+		return this;
 	}
 
-	public setIsFunc(isFunc: boolean) {
+	public setIsFunc(isFunc: boolean): DiagnosticBuilder {
 		this.isFunc = isFunc;
+		return this;
 	}
 
-	public setSeverity(severity: DiagnosticSeverity) {
+	public setAdditionalInfo(additionalInfo: string): DiagnosticBuilder {
+		this.additionalInfo = additionalInfo;
+		return this;
+	}
+
+	public setSeverity(severity: DiagnosticSeverity): DiagnosticBuilder {
 		this.severity = severity;
+		return this;
 	}
 
 	public getDiagnostic(type: DiagnosticType) {
@@ -85,16 +97,22 @@ export class DiagnosticBuilder {
 		let isFunc = this.isFunc ? "function" : "variable";
 		switch (+type) {
 			case DiagnosticType.MULTIPLE_DEFINITION:
-				return `Multiple definition of ${isFunc}: ${this.ident}.`
+				return `Multiple definition of ${isFunc}: ${this.ident}.`;
 				break;
 			case DiagnosticType.INVALID_IDENTIFIER:
-				return `Invalid ${isFunc} identifier: ${this.ident}.`
+				return `Invalid ${isFunc} identifier: ${this.ident}.`;
 				break;
 			case DiagnosticType.UNUSED_IDENTIFIER:
-				return `Unused ${isFunc}: ${this.ident}.`
+				return `Unused ${isFunc}: ${this.ident}.`;
 				break;
 			case DiagnosticType.UNDEFINED_IDENTIFIER:
-				return `Undefined ${isFunc}: ${this.ident}.`
+				return `Undefined ${isFunc}: ${this.ident}.`;
+				break;
+			case DiagnosticType.KEYWORD_CLASH:
+				return `'${this.ident}' has clashed with a keyword, please rename this ${isFunc}`;
+				break;
+			case DiagnosticType.UNMATCHED_BLOCK:
+				return `'${this.ident}' without '${this.additionalInfo}'`;
 				break;
 		}
 	}

@@ -26,3 +26,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Changed
 - Fixed bug: if a function has the same identifier as a variable, and they are both
 unused, only the function will be highlighted.
+
+### [1.2.0] - 2020.2.4
+### Added
+- Auto complete for WACC keywords and identifiers that have been defined.
+- Code snippets to generate code blocks for functions, if-statements, while-loops
+and code blocks.
+### Changed
+- Fixed bug: keywords such as 'null', 'fst' and 'snd' will no longer be falsely
+identified as identifiers.

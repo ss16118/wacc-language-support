@@ -1,0 +1,81 @@
+{
+	"While Loop": {
+		"scope": "wacc",
+		"prefix": "while",
+		"body": 
+		[
+			"while ${1:} do",
+			"\t${2:}",
+			"done"
+		],
+		"description": "A while loop"
+	},
+	"Int Function": {
+		"scope": "wacc",
+		"prefix": "int ()",
+		"body": 
+		[
+			"int ${1:}(${2:}) is",
+			"\t${3:}",
+			"end"
+		],
+		"description": "A function with 'int' as return type"
+	},
+	"Char Function": {
+		"scope": "wacc",
+		"prefix": "char ()",
+		"body": 
+		[
+			"char ${1:}(${2:}) is",
+			"\t${3:}",
+			"end"
+		],
+		"description": "A function with 'char' as return type"
+	},
+	"Bool Function": {
+		"scope": "wacc",
+		"prefix": "bool ()",
+		"body": 
+		[
+			"bool ${1:}(${2:}) is",
+			"\t${3:}",
+			"end"
+		],
+		"description": "A function with 'bool' as return type"
+	},
+	"String Function": {
+		"scope": "wacc",
+		"prefix": "string ()",
+		"body": 
+		[
+			"string ${1:}(${2:}) is",
+			"\t${3:}",
+			"end"
+		],
+		"description": "A function with 'string' as return type"
+	},
+	"Code Block": {
+		"scope": "wacc",
+		"prefix": "begin",
+		"body": 
+		[
+			"begin",
+			"\t${1:}",
+			"end"
+		],
+		"description": "A code block"
+	},
+	"If Statement": {
+		"scope": "wacc",
+		"prefix": "if",
+		"body":
+		[
+			"if ${1:} then",
+			"\t${2:}",
+			"else",
+			"\t${3:}",
+			"fi"
+		],
+		"description": "An if-statement"
+	}
+}

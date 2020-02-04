@@ -102,7 +102,7 @@
       ]
     },
     "function-signatures": {
-      "match": "((?:int|char|bool|string|pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+([_a-zA-Z](?:[_a-zA-Z0-9])*)\\s*\\((?:((?:int|char|bool|string|pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+)(,\\s*((?:int|char|bool|string|pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+))*)?\\)",
+      "match": "((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+([_a-zA-Z](?:[_a-zA-Z0-9])*)\\s*\\((?:((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+)(,\\s*((?:int|char|bool|string|pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+))*)?\\)",
       "captures": {
         "1": {
           "patterns": [
@@ -188,7 +188,7 @@
       "patterns": [
         {
           "name": "storage.type.wacc",
-          "match": "(pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))"
+          "match": "(pair\\(\\s*\\w+,\\s*\\w+\\s*\\))"
         }
       ]
     },
@@ -196,7 +196,7 @@
       "patterns": [
         {
           "name": "storage.type.wacc",
-          "match": "\\b(int|bool|char|string|(pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\)))\\s*(\\[\\])*"
+          "match": "\\b(int|bool|char|string|(pair\\(\\s*\\w+,\\s*\\w+\\s*\\)))\\s*(\\[\\])*"
         }
       ]
     },

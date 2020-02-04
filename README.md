@@ -21,3 +21,9 @@ The language server is based on the example from this [repo]("https://github.com
 
 Issue: code diagnostics does not recognize scopes. Auto-complete and other more
 complicated code diagnostics will be added later.
+
+### 1.2.0 2020/2/4
+Added autocomplete of code and code snippets for generating functions, code blocks,
+if-statements and while-loops.
+
+Issue: the problem of code diagnostics not being able to recognize scopes is yet to be solved.
