@@ -3,7 +3,7 @@
 	"description": "VS Code language support for WACC",
 	"author": "Yining Shen",
 	"icon": "images/wacc-icon.png",
-	"version": "1.2.0",
+	"version": "2.0.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ss16118/wacc-language-support"
@@ -31,7 +31,7 @@
 		"snippets": [
 			{
 				"language": "wacc",
-				"path": ".vscode/autocomplete.code-snippets"
+				"path": "snippets/autocomplete.code-snippets"
 			}
 		],
 		"configuration": {

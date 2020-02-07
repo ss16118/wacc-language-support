@@ -6,7 +6,13 @@ WACC is a simple variant on the While family of languages. It features all of th
 
 ## Features
 
-Since this is the very first version of the extension, it only provides basic syntax highlighting for the WACC language. More features, such as auto-complete and a full WACC compiler, are expected to be added in the future.
+Since this is the very first version of the extension, it only provides basic syntax highlighting for the WACC language. More features, such as auto-complete and a full WACC compiler, are expected to be added in the future. 
+__This extension only supports the most basic version of WACC as defined in the specs.__
+
+- [x] Syntax highlighting
+- [ ] Autocomplete (in progress)
+- [ ] Code diagnostics (in progress)
+- [ ] WACC compiler
 
 ## Release Notes
 
@@ -26,4 +32,9 @@ complicated code diagnostics will be added later.
 Added autocomplete of code and code snippets for generating functions, code blocks,
 if-statements and while-loops.
 
-Issue: the problem of code diagnostics not being able to recognize scopes is yet to be solved.
+### 2.0.0 2020/2/7 [Major Update]
+This extension now takes advantage of the WACC compiler to correctly identify
+scopes. It is now able to recognize unused variables and multiple definition of the
+same variable in different scopes.
+
+__More diagnostic features will be released in the near future__

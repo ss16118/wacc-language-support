@@ -13,12 +13,18 @@ import {
 } from 'vscode-languageserver';
 import { start } from 'repl';
 import { sign } from 'crypto';
-import { DiagnosticType, DiagnosticBuilder } from './DiagnosticTypes';
-import { Scope, IdentAttributes } from './scope';
+import { DiagnosticType, DiagnosticBuilder } from './DiagnosticBuilder';
+import { MethodSignature, IdentAttributes } from './scope';
+import { SemanticChecker } from './SemanticChecker';
+import { DocumentExecutor } from './DocumentExecutor';
+const fs = require('fs');
+const homedir = require('os').homedir();
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 let connection = createConnection(ProposedFeatures.all);
+let sc: SemanticChecker = new SemanticChecker();
+let dex: DocumentExecutor = new DocumentExecutor();
 
 let waccKeywords: string[] = [
 	"skip", "read", "free", "return", "exit", "print",
@@ -30,10 +36,6 @@ let waccKeywords: string[] = [
 let waccTypes: string[] = [
 	"int", "bool", "char", "string", "pair"
 ];
-
-let codeBlockScopeNodes: Scope[] = [];
-let whileScopeNodes: Scope[] = [];
-let ifScopeNodes: Scope[] = [];
 
 let variables: Map<string, IdentAttributes> = new Map();
 let methods: Map<string, MethodSignature> = new Map();
@@ -48,7 +50,6 @@ let hasDiagnosticRelatedInformationCapability: boolean = false;
 
 connection.onInitialize((params: InitializeParams) => {
 	let capabilities = params.capabilities;
-
 	// Does the client support the `workspace/configuration` request?
 	// If not, we will fall back using global settings
 	hasConfigurationCapability = !!(
@@ -62,7 +63,6 @@ connection.onInitialize((params: InitializeParams) => {
 		capabilities.textDocument.publishDiagnostics &&
 		capabilities.textDocument.publishDiagnostics.relatedInformation
 	);
-
 	return {
 		capabilities: {
 			textDocumentSync: documents.syncKind,
@@ -82,7 +82,7 @@ connection.onInitialized(() => {
 	if (hasWorkspaceFolderCapability) {
 		connection.workspace.onDidChangeWorkspaceFolders(_event => {
 			connection.console.log('Workspace folder change event received.');
-		});
+		}); 
 	}
 });
 
@@ -144,16 +144,6 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
-class MethodSignature {
-	public occurrences: number;
-	public parameters: string[] = [];
-	public indices: number[] = [];
-	constructor(occurrences: number, index: number) {
-		this.occurrences = occurrences;
-		this.indices.push(index);
-	}
-}
-
 function getDefinedIdents(text: string) {
 	let definedVarPattern = /\b((?:int|bool|char|string|(?:pair\(\s*\w+,\s*\w+\s*\)))\s*(?:(?:\[\])*)?)\s+(\w+)*\b\s*./g;
 	let definedVars: RegExpExecArray | null;
@@ -185,8 +175,7 @@ enum ScopeType {
 	FUNC_SCOPE = 0,
 	WHILE_SCOPE = 1,
 	CODE_BLOCK = 2,
-	IF_SCOPE = 3,
-	NONE = -1
+	IF_SCOPE = 3
 };
 
 let functionKeywords: string[] = [
@@ -231,18 +220,15 @@ function getWordIndex(text: string, word: string, occurrences: number): number {
 		return -1;
 }
 
-
-function validateScopes(textDocument: TextDocument, text: string): Diagnostic[] {
+function validateScopes(textDocument: TextDocument, text: string, db: DiagnosticBuilder): Diagnostic[] {
 	let diagnostics: Diagnostic[] = [];
-	let words = text.split(/\s+/g);
-	let db: DiagnosticBuilder = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
+	let words = text.split(/[\s;\(\)]+/g);
 	let initializer: string[] = ["is", "while", "begin", "if"];
 	let stack: string[][] = [];
 	let counter: number[] = [0, 0, 0, 0];
 	let scopeTypeStack: number[] = [];
 	let noneInitializer = difference(functionKeywords.concat(whileKeywords, codeBlockKeywords, ifKeywords), initializer);
-
-	words.forEach(word => {
+	words.forEach(word => { 
 		let reduced = false;
 		let wordScopeType = getWordScopeType(word);
 		let top = stack[stack.length - 1];
@@ -368,85 +354,29 @@ function validateScopes(textDocument: TextDocument, text: string): Diagnostic[] 
 }
 
 
-function validateUnusedAndInvalidIdentifiers(isFunc: boolean,
-																						 textDocument: TextDocument, 
-																						 text: string): Diagnostic[] 
+function validateInvalidIdentifiers(isFunc: boolean, db: DiagnosticBuilder): Diagnostic[]  
 {
 	let diagnostics: Diagnostic[] = [];
-	let db = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
-
 	let map = isFunc ? methods : variables;
 	db.setIsFunc(isFunc);
-	// Find defined variables that are never used
 	for (let [ident, attrs] of map) {
 		db.setIdent(ident);
+		db.setStartIndex(attrs.indices[0]);
 		if (!ident) { continue; }
-		if (attrs.occurrences > 1) {
-			// Same variable defined multiple times
-			for (var i = 0; i < attrs.occurrences; i++) {
-				let startIndex = attrs.indices[i];
-				db.setStartIndex(startIndex);
-				db.setSeverity(DiagnosticSeverity.Error);
-				let diagnostic = db.getDiagnostic(DiagnosticType.MULTIPLE_DEFINITION);
-				diagnostics.push(diagnostic);
-			}
-		}
-		let startIndex = attrs.indices[0];
-		db.setStartIndex(startIndex);
-		if (waccKeywords.includes(ident) || waccTypes.includes(ident)) {
-			db.setSeverity(DiagnosticSeverity.Error);
-			let diagnostic = db.getDiagnostic(DiagnosticType.KEYWORD_CLASH);
-			diagnostics.push(diagnostic);
-		}
 		if (!/[_a-zA-Z]/g.test(ident.substring(0, 1))) {
 			// Invalid identifier name
 			db.setSeverity(DiagnosticSeverity.Error);
 			let diagnostic = db.getDiagnostic(DiagnosticType.INVALID_IDENTIFIER);
 			diagnostics.push(diagnostic);
 		}
-		let regexUnusedIdent = isFunc ? new RegExp("\\b" + ident + "\\s*\\(", "g") : 
-																		new RegExp("\\b" + ident + "\\b\\s*[^\\(]", "g");
-		if ((text.match(regexUnusedIdent) || []).length == 1) {
-			// Unused identifier
-			db.setSeverity(DiagnosticSeverity.Warning);
-			let diagnostic = db.getDiagnostic(DiagnosticType.UNUSED_IDENTIFIER);
-			diagnostics.push(diagnostic);
-		}
 	}
 	return diagnostics;
 }
 
-function validateUndefinedVariables(textDocument: TextDocument, 
-																		text: string): Diagnostic[] {
+function validateIdentifiers(db: DiagnosticBuilder): Diagnostic[] {
 	let diagnostics: Diagnostic[] = [];
-	let identPattern = /(\w+)(.)/gs;
-	let token: RegExpExecArray | null;
-	let db = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
-	let types = difference(waccTypes, ["pair"]);
-	while (token = identPattern.exec(text)) {
-		let isValidType = (types.includes(token[1]) ||
-											 (token[1] === "pair" && token[2] === "("));
-		if ((!waccKeywords.includes(token[1])) && (!isValidType) &&
-				(!variables.get(token[1])) &&
-				(!methods.get(token[1])) &&
-				(isNaN(Number(token[1]))) && (!(token[0] === "end"))) {
-			db.setIdent(token[1]);
-			db.setIsFunc(token[0].endsWith("("));
-			db.setSeverity(DiagnosticSeverity.Error);
-			db.setStartIndex(token.index);
-			let diagnostic = db.getDiagnostic(DiagnosticType.UNDEFINED_IDENTIFIER);
-			diagnostics.push(diagnostic);
-		}
-	}
-	return diagnostics;
-}
-
-function validateIdentifiers(textDocument: TextDocument,
-													 text: string): Diagnostic[] {
-	let diagnostics: Diagnostic[] = [];
-	diagnostics = diagnostics.concat(validateUnusedAndInvalidIdentifiers(true, textDocument, text));
-	diagnostics = diagnostics.concat(validateUnusedAndInvalidIdentifiers(false, textDocument, text));
-	diagnostics = diagnostics.concat(validateUndefinedVariables(textDocument, text));
+	diagnostics = diagnostics.concat(validateInvalidIdentifiers(true, db));
+	diagnostics = diagnostics.concat(validateInvalidIdentifiers(false, db));
 	return diagnostics;
 }
 
@@ -469,15 +399,32 @@ function difference(a1: string[], a2: string[]): string[] {
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
 	let settings = await getDocumentSettings(textDocument.uri);
+
 	methods.clear();
 	variables.clear();
 	// The validator creates diagnostics for all uppercase words length 2 and more
-	let problems = 0;
+	
+	fs.writeFile(`${homedir}/Desktop/wacc-language-support/utils/temp.wacc`, textDocument.getText(), (error: Error) => {	
+		if (error) {
+			console.log(error);
+			throw error;
+		}
+	});
 	let diagnostics: Diagnostic[] = [];
+	let db = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
+
 	let text = getTextToDiagnose(textDocument);
-	diagnostics = diagnostics.concat(validateScopes(textDocument, text));
-  getDefinedIdents(text);
-	diagnostics = diagnostics.concat(validateIdentifiers(textDocument, text));
+	getDefinedIdents(text);
+	let errorMessages: string = await dex.update();
+	/* Syntax Diagnostics */
+	diagnostics = diagnostics.concat(validateScopes(textDocument, text, db));
+	diagnostics = diagnostics.concat(validateIdentifiers(db));
+	/* Semantic Diagnostics */
+	sc.getSemanticErrors(errorMessages);
+	sc.getWarningMessages(errorMessages);
+	diagnostics = diagnostics.concat(sc.getSemanticDiagnostics(text, db));
+	diagnostics = diagnostics.concat(sc.getSemanticWarnings(text, db));
+	// diagnostics = diagnostics.concat(validateIdentifiers(textDocument, text, db));
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }

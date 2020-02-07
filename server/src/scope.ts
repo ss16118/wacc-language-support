@@ -9,13 +9,12 @@ export class IdentAttributes {
 	}
 }
 
-export class Scope {
-	public keyword: string;
-	public index: number;
-	public variables: Map<string, IdentAttributes>;
-	constructor(keyword: string, index: number) {
-		this.keyword = keyword;
-		this.index = index;
-		this.variables = new Map();
+export class MethodSignature {
+	public occurrences: number;
+	public parameters: string[] = [];
+	public indices: number[] = [];
+	constructor(occurrences: number, index: number) {
+		this.occurrences = occurrences;
+		this.indices.push(index);
 	}
 }

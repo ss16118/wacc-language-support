@@ -100,11 +100,11 @@
           "include": "#characters"
         }
       ]
-    },
+		},
     "function-signatures": {
-      "match": "((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+([_a-zA-Z](?:[_a-zA-Z0-9])*)\\s*\\((?:((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+)(,\\s*((?:int|char|bool|string|pair\\s*\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+))*)?\\)",
-      "captures": {
-        "1": {
+			"begin": "((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+([_a-zA-Z](?:[_a-zA-Z0-9])*)\\s*\\(",
+			"beginCaptures": {
+				"1": {
           "patterns": [
             {
               "include": "#types"
@@ -113,29 +113,30 @@
         },
         "2": {
           "name": "entity.name.function.wacc"
-        },
-        "3": {
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        "4": {
-          "name": "variable.parameter.wacc"
-        },
-        "6": {
-          "patterns": [
-            {
-              "include": "#types"
-            }
-          ]
-        },
-        "7": {
-          "name": "variable.parameter.wacc"
         }
-      }
-    },
+			},
+			"end": "\\)",
+      "patterns": [
+				{
+					"include": "#function-params"
+				}
+			]
+		},
+		"function-params": {
+			"match": "((?:int|char|bool|string|pair\\(\\s*\\w+,\\s*\\w+\\s*\\))(?:\\[\\])*)\\s+(\\w+)",
+			"captures": {
+				"1": {
+					"patterns": [
+						{
+							"include": "#types"
+						}
+					]
+				},
+				"2": {
+					"name": "variable.parameter.wacc"
+				}
+			}
+		},
     "code-block": {
       "patterns": [
         {
@@ -177,12 +178,12 @@
       ]
     },
     "base-types": {
-      "patterns": [
-        {
-          "name": "storage.type.wacc",
-          "match": "\\b(int|bool|char|string)\\b"
-        }
-      ]
+			"match": "\\b(int|bool|char|string)\\b",
+			"captures": {
+				"1": {
+					"name": "storage.type.wacc"
+				}
+			}
     },
     "pair-type": {
       "patterns": [
@@ -196,7 +197,7 @@
       "patterns": [
         {
           "name": "storage.type.wacc",
-          "match": "\\b(int|bool|char|string|(pair\\(\\s*\\w+,\\s*\\w+\\s*\\)))\\s*(\\[\\])*"
+          "match": "\\b(int|bool|char|string|(pair\\(\\s*\\w+,\\s*\\w+\\s*\\)))\\s*(\\[\\])+"
         }
       ]
     },
