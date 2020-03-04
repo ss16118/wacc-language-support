@@ -1,0 +1,23 @@
+{
+	"name": "wacc-language-server",
+	"description": "Language server for WACC",
+	"version": "1.1.1",
+	"author": "Yining Shen",
+	"engines": {
+		"vscode": "^1.33.0"
+	},
+	"scripts": {
+		"update-vscode": "vscode-install",
+		"postinstall": "vscode-install"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ss16118/wacc-language-support"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^5.2.1"
+	},
+	"devDependencies": {
+		"vscode": "1.1.36"
+	}
+}

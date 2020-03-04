@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, extensions } from 'vscode';
 
 import {
 	LanguageClient,
@@ -18,7 +18,7 @@ export function activate(context: ExtensionContext) {
 	// The debug options for the server
 	// --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
 	let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
-
+	
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	let serverOptions: ServerOptions = {
@@ -40,18 +40,20 @@ export function activate(context: ExtensionContext) {
 			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
 		}
 	};
-
 	// Create the language client and start the client.
 	client = new LanguageClient(
-		'languageServerExample',
-		'Language Server Example',
+		'languageServer',
+		'Language Server',
 		serverOptions,
 		clientOptions
 	);
-
 	// Start the client. This will also launch the server
 	client.start();
+	client.onReady().then(() => {
+		client.sendRequest("custom/extensionPath", extensions.getExtension("yiningshen.wacc-language-support").extensionPath);
+	});
 }
+
 
 export function deactivate(): Thenable<void> | undefined {
 	if (!client) {

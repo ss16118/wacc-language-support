@@ -1,47 +1,38 @@
 import {
-	createConnection,
-	TextDocuments,
-	TextDocument,
 	Diagnostic,
 	DiagnosticSeverity,
-	ProposedFeatures,
-	InitializeParams,
-	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams
 } from 'vscode-languageserver';
 import { DiagnosticBuilder, DiagnosticType } from './DiagnosticBuilder'
 
-export class SemanticChecker {
+export class DiagnosticsParser {
 
-	private semanticErrors = "";
-	private warningMessages = "";
-	public getSemanticErrors(errors: string) {
-		let semanticPattern = /\bsemantic error(s)?:/g;
-		let matched: RegExpExecArray | null;
-		if (!(errors === "") &&
-				 (matched = semanticPattern.exec(errors))) {
-			this.semanticErrors = errors.substring(matched.index + matched[0].length, errors.length);
-		}
-		this.semanticErrors = "";
-	}
+	private keywordsToTypeMap:Map<string, DiagnosticType> = new Map([
+		["Undefined", DiagnosticType.UNDEFINED_IDENTIFIER],
+		["Already defined", DiagnosticType.MULTIPLE_DEFINITION],
+		["Parameter num mismatch", DiagnosticType.PARAMETER_NUM_MISMATCH],
+		["Type mismatch", DiagnosticType.TYPE_MISMATCH],
+		["Return in main", DiagnosticType.RETURN_IN_MAIN],
+		["Insufficient array rank", DiagnosticType.INSUFFICIENT_ARRAY_RANK],
+		["Access to null literal", DiagnosticType.ACCESS_TO_NULL_LITERAL],
+		["Empty program body", DiagnosticType.EMPTY_PROGRAM_BODY],
+		["Parse Error", DiagnosticType.GENERAL_SYNTAX_ERROR],
+		["Invalid integer", DiagnosticType.INVALID_INTEGER]
+	]);
 
-	public getWarningMessages(errors: string): string {
-		let warningPattern = /\bwarning(s)?:/g;
+	private getIdentName(line: string): string {
+		let identPattern = /#([^#]+)#/g;
 		let matched: RegExpExecArray | null;
-		if (!(errors === "") &&
-				 (matched = warningPattern.exec(errors))) {
-			this.warningMessages = errors.substring(matched.index + matched[0].length, errors.length);
+		if (matched = identPattern.exec(line)) {
+			return matched[1];
 		}
 		return "";
 	}
 
-	private getIdentName(line: string): string {
-		let identPattern = /'(\w+)'/g;
+	private getAdditionalInfo(line: string): string {
+		let additionalMessagePattern = /\^(.+)\^/g;
 		let matched: RegExpExecArray | null;
-		if (matched = identPattern.exec(line)) {
-			return matched[1];
+		if (matched = additionalMessagePattern.exec(line)) {
+			return matched[1].replace(/\^/g, "");
 		}
 		return "";
 	}
@@ -68,11 +59,12 @@ export class SemanticChecker {
 		return index;
 	}
 
-	public getSemanticWarnings(text: string, db: DiagnosticBuilder): Diagnostic[] {
+	public parseWarningOutput(text: string, warningMessages: string, 
+															 	 db: DiagnosticBuilder): Diagnostic[] {
 		let diagnostics: Diagnostic[] = [];
 		db.setSeverity(DiagnosticSeverity.Warning);
-		if (!(this.warningMessages === "")) {
-			let lines: string[] = this.warningMessages.split("\n");
+		if (!(warningMessages === "")) {
+			let lines: string[] = warningMessages.split("\n");
 			lines.forEach(line => {
 				if (line.includes("Unused variable")) {
 					let ident = this.getIdentName(line);
@@ -85,28 +77,35 @@ export class SemanticChecker {
 		return diagnostics;
 	}
 
+	private buildDiagnostic(line: string, text: string, 
+													db: DiagnosticBuilder, type: DiagnosticType) {
+		let ident = this.getIdentName(line);
+		let index = this.getIndex(line, text);
+		let additionalInfo = this.getAdditionalInfo(line);
+		db.setIdent(ident).setStartIndex(index).setAdditionalInfo(additionalInfo);
+		if (type == DiagnosticType.UNDEFINED_IDENTIFIER) {
+			db.setIsFunc((line.split(/\s+/g)[1]) === "function");
+		} else if (type == DiagnosticType.MULTIPLE_DEFINITION) {
+			db.setIsFunc((line.split(/\s+/g)[2]) === "function");
+		}
+		return db.getDiagnostic(type);
+	}
 
-	public getSemanticDiagnostics(text: string, db: DiagnosticBuilder): Diagnostic[] {
+
+	public parseErrorOutput(text: string, errorMessages: string, 
+															  db: DiagnosticBuilder): Diagnostic[] {
 		let diagnostics: Diagnostic[] = [];
 		db.setSeverity(DiagnosticSeverity.Error);
-		if (!(this.semanticErrors === "")) {
-			let lines: string[] = this.semanticErrors.split("\n");
+		if (!(errorMessages === "")) {
+			let lines: string[] = errorMessages.split("\n");
 			lines.forEach(line => {
-				if (line.includes("Undefined variable")) {
-					let ident = this.getIdentName(line);
-					let index = this.getIndex(line, text);
-					db.setIdent(ident).setStartIndex(index).setIsFunc(false);
-					diagnostics.push(db.getDiagnostic(DiagnosticType.UNDEFINED_IDENTIFIER));
-				}
-				if (line.includes("Already defined")) {
-					let ident = this.getIdentName(line);
-					let index = this.getIndex(line, text);
-					db.setIdent(ident).setStartIndex(index).setIsFunc(false);
-					diagnostics.push(db.getDiagnostic(DiagnosticType.MULTIPLE_DEFINITION));
-				}
+				this.keywordsToTypeMap.forEach((type: DiagnosticType, keywords: string) => {
+					if (line.includes(keywords)) {
+						diagnostics = diagnostics.concat(this.buildDiagnostic(line, text, db, type));
+					}
+				})
 			});
 		}
 		return diagnostics;
 	}
-
 }

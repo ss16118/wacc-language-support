@@ -1,15 +1,7 @@
 import {
-	createConnection,
-	TextDocuments,
 	TextDocument,
 	Diagnostic,
 	DiagnosticSeverity,
-	ProposedFeatures,
-	InitializeParams,
-	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams,
 } from 'vscode-languageserver';
 
 export enum DiagnosticType {
@@ -17,7 +9,15 @@ export enum DiagnosticType {
 	INVALID_IDENTIFIER,
 	UNUSED_IDENTIFIER,
 	UNDEFINED_IDENTIFIER,
+	TYPE_MISMATCH,
+	RETURN_IN_MAIN,
+	ACCESS_TO_NULL_LITERAL,
+	PARAMETER_NUM_MISMATCH,
+	INSUFFICIENT_ARRAY_RANK,
+	EMPTY_PROGRAM_BODY,
 	KEYWORD_CLASH,
+	GENERAL_SYNTAX_ERROR,
+	INVALID_INTEGER,
 	UNMATCHED_BLOCK
 };
 
@@ -95,36 +95,44 @@ export class DiagnosticBuilder {
 
 	private getDiagnosticMessage(type: DiagnosticType) {
 		let isFunc = this.isFunc ? "function" : "variable";
-		switch (+type) {
+		switch (type) {
 			case DiagnosticType.MULTIPLE_DEFINITION:
 				return `Multiple definition of ${isFunc}: ${this.ident}.`;
-				break;
 			case DiagnosticType.INVALID_IDENTIFIER:
 				return `Invalid ${isFunc} identifier: ${this.ident}.`;
-				break;
 			case DiagnosticType.UNUSED_IDENTIFIER:
 				return `Unused ${isFunc}: ${this.ident}.`;
-				break;
 			case DiagnosticType.UNDEFINED_IDENTIFIER:
 				return `Undefined ${isFunc}: ${this.ident}.`;
-				break;
+			case DiagnosticType.RETURN_IN_MAIN:
+				return "Cannot have 'return' statement in main";
+			case DiagnosticType.TYPE_MISMATCH:
+				return `${this.additionalInfo}`;
+			case DiagnosticType.ACCESS_TO_NULL_LITERAL:
+				return `${this.additionalInfo}`;
+			case DiagnosticType.PARAMETER_NUM_MISMATCH:
+				return `${this.additionalInfo}`;
+			case DiagnosticType.INSUFFICIENT_ARRAY_RANK:
+				return `${this.additionalInfo}`;
+			case DiagnosticType.EMPTY_PROGRAM_BODY:
+				return `Empty program body!`;
 			case DiagnosticType.KEYWORD_CLASH:
 				return `'${this.ident}' has clashed with a keyword, please rename this ${isFunc}`;
-				break;
 			case DiagnosticType.UNMATCHED_BLOCK:
 				return `'${this.ident}' without '${this.additionalInfo}'`;
-				break;
+			case DiagnosticType.GENERAL_SYNTAX_ERROR:
+				return `${this.additionalInfo}`;
+			case DiagnosticType.INVALID_INTEGER:
+				return `Invalid integer: a 32-bit integer has to be from -2147483648 to 2147483647`;
 		}
 	}
 
 	private getDiagnosticRelatedInfo(type: DiagnosticType) {
-		switch (+type) {
+		switch (type) {
 			case DiagnosticType.INVALID_IDENTIFIER:
 				return "Identifers must start with an underscore ('_') or a letter";
-				break;
 			case DiagnosticType.UNUSED_IDENTIFIER:
 				return `${this.ident} is declared but ${this.isFunc ? "it is never called" : "its value is never read"}`
-				break;
 		}
 	}
 }

@@ -9,21 +9,19 @@ import {
 	DidChangeConfigurationNotification,
 	CompletionItem,
 	CompletionItemKind,
-	TextDocumentPositionParams,
+	TextDocumentPositionParams
 } from 'vscode-languageserver';
-import { start } from 'repl';
-import { sign } from 'crypto';
 import { DiagnosticType, DiagnosticBuilder } from './DiagnosticBuilder';
 import { MethodSignature, IdentAttributes } from './scope';
-import { SemanticChecker } from './SemanticChecker';
+import { DiagnosticsParser } from './SemanticChecker';
 import { DocumentExecutor } from './DocumentExecutor';
 const fs = require('fs');
-const homedir = require('os').homedir();
+export let extensionPath: string = ""
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 let connection = createConnection(ProposedFeatures.all);
-let sc: SemanticChecker = new SemanticChecker();
+let dp: DiagnosticsParser = new DiagnosticsParser();
 let dex: DocumentExecutor = new DocumentExecutor();
 
 let waccKeywords: string[] = [
@@ -84,29 +82,32 @@ connection.onInitialized(() => {
 			connection.console.log('Workspace folder change event received.');
 		}); 
 	}
+	connection.onRequest("custom/extensionPath", path => {
+		extensionPath = path;
+	});
 });
 
 // The example settings
-interface ExampleSettings {
+interface Settings {
 	maxNumberOfProblems: number;
 }
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ExampleSettings = defaultSettings;
+const defaultSettings: Settings = { maxNumberOfProblems: 1000 };
+let globalSettings: Settings = defaultSettings;
 
 // Cache the settings of all open documents
-let documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
+let documentSettings: Map<string, Thenable<Settings>> = new Map();
 
 connection.onDidChangeConfiguration(change => {
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
 	} else {
-		globalSettings = <ExampleSettings>(
-			(change.settings.languageServerExample || defaultSettings)
+		globalSettings = <Settings>(
+			(change.settings.languageServer || defaultSettings)
 		);
 	}
 
@@ -114,7 +115,7 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
+function getDocumentSettings(resource: string): Thenable<Settings> {
 	if (!hasConfigurationCapability) {
 		return Promise.resolve(globalSettings);
 	}
@@ -122,7 +123,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 	if (!result) {
 		result = connection.workspace.getConfiguration({
 			scopeUri: resource,
-			section: 'languageServerExample'
+			section: 'languageServer'
 		});
 		documentSettings.set(resource, result);
 	}
@@ -220,9 +221,9 @@ function getWordIndex(text: string, word: string, occurrences: number): number {
 		return -1;
 }
 
-function validateScopes(textDocument: TextDocument, text: string, db: DiagnosticBuilder): Diagnostic[] {
+function validateScopes(text: string, db: DiagnosticBuilder): Diagnostic[] {
 	let diagnostics: Diagnostic[] = [];
-	let words = text.split(/[\s;\(\)]+/g);
+	let words = text.split(/[\s;\(\)0-9]+/g);
 	let initializer: string[] = ["is", "while", "begin", "if"];
 	let stack: string[][] = [];
 	let counter: number[] = [0, 0, 0, 0];
@@ -399,33 +400,31 @@ function difference(a1: string[], a2: string[]): string[] {
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
 	let settings = await getDocumentSettings(textDocument.uri);
-
 	methods.clear();
 	variables.clear();
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	
-	fs.writeFile(`${homedir}/Desktop/wacc-language-support/utils/temp.wacc`, textDocument.getText(), (error: Error) => {	
+
+	let diagnostics: Diagnostic[] = [];
+	let db = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
+	let text = getTextToDiagnose(textDocument);
+	fs.writeFile(`${extensionPath}/utils/temp.wacc`, textDocument.getText(), (error: Error) => {	
 		if (error) {
 			console.log(error);
 			throw error;
 		}
 	});
-	let diagnostics: Diagnostic[] = [];
-	let db = new DiagnosticBuilder(textDocument, hasDiagnosticRelatedInformationCapability);
-
-	let text = getTextToDiagnose(textDocument);
 	getDefinedIdents(text);
-	let errorMessages: string = await dex.update();
+	let output: [string, string] | undefined = await dex.update();
 	/* Syntax Diagnostics */
-	diagnostics = diagnostics.concat(validateScopes(textDocument, text, db));
+	diagnostics = diagnostics.concat(validateScopes(text, db));
 	diagnostics = diagnostics.concat(validateIdentifiers(db));
 	/* Semantic Diagnostics */
-	sc.getSemanticErrors(errorMessages);
-	sc.getWarningMessages(errorMessages);
-	diagnostics = diagnostics.concat(sc.getSemanticDiagnostics(text, db));
-	diagnostics = diagnostics.concat(sc.getSemanticWarnings(text, db));
+	if (output) {
+		diagnostics = diagnostics.concat(dp.parseErrorOutput(text, output[1], db));
+		diagnostics = diagnostics.concat(dp.parseWarningOutput(text, output[0], db));
+	}
 	// diagnostics = diagnostics.concat(validateIdentifiers(textDocument, text, db));
 	// Send the computed diagnostics to VSCode.
+	diagnostics = diagnostics.slice(0, Math.min(diagnostics.length, settings.maxNumberOfProblems));
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 

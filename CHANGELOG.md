@@ -66,3 +66,39 @@ than two parameters. Now it highlights the function signature correctly no matte
 how many parameters there are.
 - Fixed bug: syntax highlighting misidentified identifiers that have type names
 in them as types. Now it correctly marks them as variables (or functions).
+
+### [2.0.1] - 2020.2.7
+### Changed
+- Fixed bug: code diagnostics could not find the correct path for the WACC compiler.
+Now this bug is fixed.
+- Fixed bug: code diagnostics no longer produces redundant messages.
+
+### [2.0.2] - 2020.2.7
+### Changed
+- Fixed bug: syntax highlighting did not recognize some of the keywords when
+there is no whitespace between tokens. Now it is fixed.
+- Fixed bug: scope recognition no longer fails when there is no whitespace
+between some of the keywords and other tokens.
+
+### [2.0.3] - 2020.2.7
+### Changed
+- Improvement : path to the extension no longer needs to be updated manually in the
+source code files. It is now detected from the client side and send to the server
+side at the start.
+- Fixed bug: minor bug in SemanticChecker.
+
+### [2.1.0] - 2020.3.4
+### Added
+- Diagnostics for the following error types:
+	- Multiple definitions of variables in the same scope and functions
+	- Type mismatch
+	- Return in main
+	- Access to null literals
+	- Parameter number mismatch
+	- Insufficient array rank
+	- Empty program body
+	- General syntactic errors
+	- Invalid integer
+### Changed
+- Code refactoring in SemanticChecker and DiagnosticBuilder.
+- Fixed bug: added syntax highlighting for 'fst' and 'snd'.

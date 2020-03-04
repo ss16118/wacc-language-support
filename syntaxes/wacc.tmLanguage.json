@@ -165,7 +165,7 @@
       "patterns": [
         {
           "name": "keyword.control.conditional.wacc",
-          "match": "\\b(if|else|then|fi)\\b"
+          "match": "(if|else|then|fi)"
         }
       ]
     },
@@ -205,7 +205,7 @@
       "patterns": [
         {
           "name": "keyword.operator.wacc",
-          "match": "\\b(!|len|ord|chr|-)\\b"
+          "match": "\\b(!|len|ord|chr|-|fst|snd)\\b"
         }
       ]
     },
@@ -213,7 +213,7 @@
       "patterns": [
         {
           "name": "keyword.operator.wacc",
-          "match": "(=|\\*|\\/|>|>=|<|<=|==|!=|&&|\\|\\||\\+)"
+          "match": "(=|\\*|\\/|>|>=|<|<=|==|!=|&&|\\|\\||\\+|%)"
         }
       ]
     },

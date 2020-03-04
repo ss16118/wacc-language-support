@@ -11,7 +11,7 @@ __This extension only supports the most basic version of WACC as defined in the 
 
 - [x] Syntax highlighting
 - [ ] Autocomplete (in progress)
-- [ ] Code diagnostics (in progress)
+- [x] Code diagnostics
 - [ ] WACC compiler
 
 ## Release Notes
@@ -34,7 +34,12 @@ if-statements and while-loops.
 
 ### 2.0.0 2020/2/7 [Major Update]
 This extension now takes advantage of the WACC compiler to correctly identify
-scopes. It is now able to recognize unused variables and multiple definition of the
+scopes. It is now able to recognize unused variables and multiple definitions of the
 same variable in different scopes.
 
-__More diagnostic features will be released in the near future__
+### 2.1.0 2020/3/4 [Major Update]
+The extension now catches most of the syntactic and semantic errors while writing
+a WACC program. It has to be noted that the messages prompted for syntactic errors
+might not be very informative since they are taken simply from ANTLR.
+
+__A full WACC compiler will soon be added to the extension__
