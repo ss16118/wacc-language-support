@@ -1,0 +1,91 @@
+#!/usr/bin/ruby
+# command line script that sends an HTTPS request to the WACC compiler web interface and interprets the JSON response
+
+require "rest-client"
+require "json"
+require "optparse"
+
+
+ARGV << "-h" if ARGV.empty?
+
+$options = {}
+$opts = []
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] <target.s> \n  options:"
+  
+  $options[:assemble_only] = false
+  opts.on("-a", "--assemble_only",
+    "Assemble only. Check the input file for assembly errors, but do not execute the generated binary file.") do
+    $opts << "-a" 
+    $options[:assemble_only] = true
+  end  
+
+  $options[:directory] = false
+  opts.on("-d", "--directory",
+    "Give directory of ARM assembly files." ) do
+    $options[:directory] = true
+  end
+
+  opts.on_tail("-h", "--help",
+    "Show this message") do
+    puts opts
+    puts ""
+    puts "  target.s: path to ARM assembly program file to emulate (or target directory if -dir option set)"
+    exit
+  end
+
+end.parse!
+
+# set up empty array of file_paths to process
+files = []
+files << ARGV[0]
+
+maxIndex = ARGV.length() - 1
+stdin = ""
+for i in 1..maxIndex do
+	stdin << ARGV[i] + " "
+end
+
+# check that there is at least one file to process
+if files == [] then
+  puts "Error: no file(s) targeted"
+  exit 1
+end
+
+# now process each target file
+files.each do |file_path|
+  puts "calling the ARM emulator on #{file_path}"
+  
+  # get stdin from the user to pass to the ARM emulator
+  # unless $options[:assemble_only] then
+  #  puts "please provide a stdin stream to use when emulating the program:"
+  #  stdin = STDIN.gets
+  # end
+
+  # make the call to the ARM emulator
+  RestClient.post("https://teaching.doc.ic.ac.uk/wacc_compiler/emulate.cgi",
+                    :stdin => stdin,
+                    :options => $opts,
+                    :testfile => File.new(file_path)
+                   ) do |response|
+    json = JSON.load(response)
+    puts "-- Test: #{json['test']}"
+    puts ""
+    puts "-- Uploaded file: "
+    puts "---------------------------------------------------------------"
+    puts json['upload']
+    puts "---------------------------------------------------------------"
+    puts ""
+    puts "-- Assembly Output:"
+    puts json['assemble_out']
+    puts ""
+    unless $options[:assemble_only] then
+      puts "-- Emulation Output:" 
+      puts json['emulator_out']
+      puts "---------------------------------------------------------------"
+      puts "The exit code is: #{json['emulator_exit']}."
+      puts ""
+    end
+  end
+  
+end

@@ -65,7 +65,13 @@
 					"description": "Traces the communication between VS Code and the language server."
 				}
 			}
-		}
+		},
+		"commands": [
+			{
+				"command": "execute-wacc",
+				"title": "Execute WACC"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "cd client && npm run update-vscode && cd .. && npm run compile",
@@ -76,9 +82,12 @@
 	},
 	"devDependencies": {
 		"@types/mocha": "^5.2.7",
-		"@types/node": "^12.11.7",
+		"@types/node": "^12.12.29",
 		"tslint": "^5.16.0",
 		"typescript": "^3.6.4",
 		"vscode": "1.1.36"
+	},
+	"dependencies": {
+		"colors": "^1.4.0"
 	}
 }

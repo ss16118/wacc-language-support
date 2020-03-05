@@ -1,14 +1,20 @@
 import * as path from 'path';
-import { workspace, ExtensionContext, extensions } from 'vscode';
+import { workspace, ExtensionContext, extensions, commands, window, TextDocument, InputBoxOptions } from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind
+	TransportKind,
 } from 'vscode-languageclient';
 
 let client: LanguageClient;
+
+let currentDocument: string = "";
+let inputBoxOptions: InputBoxOptions = {
+	prompt: "please provide a stdin stream to use when emulating the program:Please enter input to the program",
+	placeHolder: ""
+}
 
 export function activate(context: ExtensionContext) {
 	// The server is implemented in node
@@ -52,8 +58,32 @@ export function activate(context: ExtensionContext) {
 	client.onReady().then(() => {
 		client.sendRequest("custom/extensionPath", extensions.getExtension("yiningshen.wacc-language-support").extensionPath);
 	});
+	
+	// Register commands
+	context.subscriptions.push(commands.registerCommand("execute-wacc", 
+		async () => {
+			client.sendRequest("custom/getDoc", currentDocument);
+			await window.showInputBox(inputBoxOptions).then( input => {
+					client.sendRequest("custom/execute", input);
+				}
+			);
+		}
+	));
 }
 
+window.onDidChangeActiveTextEditor((e) => {
+	currentDocument = e.document.getText();
+});
+
+workspace.onDidChangeTextDocument((e) => {
+	if (!(e.document.fileName.startsWith("extension-output"))) {
+		 currentDocument = e.document.getText();
+	}
+});
+
+workspace.onDidOpenTextDocument((e) => {
+	currentDocument = e.getText();
+});
 
 export function deactivate(): Thenable<void> | undefined {
 	if (!client) {
