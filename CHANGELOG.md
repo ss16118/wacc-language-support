@@ -4,6 +4,11 @@ All notable changes to the "wacc-language-support" extension will be documented 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+### [2.2.1] - 2020.3.7
+### Changed
+- The '\n' character in the refEmulate file is converted from Windows format
+to Unix format.
+
 ### [2.2.0] - 2020.3.5
 ### Added
 - An ARM emulator and a command for executing the current WACC file 

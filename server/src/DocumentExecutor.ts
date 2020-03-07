@@ -51,8 +51,7 @@ export class DocumentExecutor {
 				if (!(stderr === "")) {
 					console.log("An error occurred: " + stderr);
 				} else {
-					console.log("Execution Result:");
-					console.log(this.extractPureOutput(stdout) + "\n");
+					console.log("Execution Result:\n" + this.extractPureOutput(stdout) + "\n");
 				}
 			}
 		} catch (ex) {
